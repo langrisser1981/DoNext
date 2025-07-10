@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import Combine
+import Observation
 
 /// 主頁面導航目標
 enum HomeDestination: Hashable {
@@ -16,6 +16,7 @@ enum HomeDestination: Hashable {
 
 /// 主頁面座標器
 /// 管理主頁面相關的導航流程
+@Observable
 @MainActor
 final class HomeCoordinator: BaseCoordinator {
     weak var appCoordinator: AppCoordinator?

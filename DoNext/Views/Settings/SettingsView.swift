@@ -9,7 +9,7 @@ import SwiftUI
 
 /// 設定視圖
 struct SettingsView: View {
-    @EnvironmentObject var appCoordinator: AppCoordinator
+    @Environment(AppCoordinator.self) var appCoordinator
     
     var body: some View {
         List {

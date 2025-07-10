@@ -6,21 +6,22 @@
 //
 
 import SwiftUI
-import Combine
+import Observation
 
 /// 應用程式主座標器
 /// 管理整個應用程式的導航流程和狀態
+@Observable
 @MainActor
 final class AppCoordinator: BaseCoordinator, AppCoordinatorProtocol {
-    @Published var appState: CoordinatorAppState = .onboarding
-    @Published var presentedSheet: SheetDestination?
-    @Published var presentedAlert: AlertDestination?
+    var appState: CoordinatorAppState = .onboarding
+    var presentedSheet: SheetDestination?
+    var presentedAlert: AlertDestination?
     
     /// 當前用戶資訊
-    @Published var currentUser: AuthResult?
+    var currentUser: AuthResult?
     
     /// 是否已登入
-    @Published var isLoggedIn: Bool = false
+    var isLoggedIn: Bool = false
     
     /// 當前驗證策略
     private var authStrategy: AuthenticationStrategy?

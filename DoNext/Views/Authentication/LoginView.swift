@@ -10,7 +10,7 @@ import SwiftUI
 /// 登入視圖
 /// 提供 Apple Sign-In 和 Google Sign-In 的登入選項
 struct LoginView: View {
-    @EnvironmentObject var appCoordinator: AppCoordinator
+    @Environment(AppCoordinator.self) var appCoordinator
     @State private var isLoading = false
     @State private var showAlert = false
     @State private var alertMessage = ""
@@ -196,5 +196,5 @@ struct LoginView: View {
 
 #Preview {
     LoginView()
-        .environmentObject(AppCoordinator())
+        .environment(AppCoordinator())
 }

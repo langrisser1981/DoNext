@@ -10,7 +10,7 @@ import SwiftUI
 /// 引導頁面視圖
 /// 提供多頁面的應用程式介紹，包含頁面指示器和可配置的內容
 struct LandingPageView: View {
-    @EnvironmentObject var appCoordinator: AppCoordinator
+    @Environment(AppCoordinator.self) var appCoordinator
     @State private var currentPage = 0
     @State private var dragOffset: CGSize = .zero
     
@@ -99,5 +99,5 @@ struct LandingPageView: View {
 
 #Preview {
     LandingPageView()
-        .environmentObject(AppCoordinator())
+        .environment(AppCoordinator())
 }

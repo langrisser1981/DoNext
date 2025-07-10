@@ -7,17 +7,18 @@
 
 import Foundation
 import SwiftData
-import Combine
+import Observation
 
 /// 主頁面 ViewModel
 /// 管理主頁面的業務邏輯和狀態
+@Observable
 @MainActor
-final class HomeViewModel: ObservableObject {
+final class HomeViewModel {
     /// 搜索文字
-    @Published var searchText = ""
+    var searchText = ""
     
     /// 選中的分類索引
-    @Published var selectedCategoryIndex = 0
+    var selectedCategoryIndex = 0
     
     /// 過濾待辦事項
     /// - Parameters:

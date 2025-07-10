@@ -6,11 +6,11 @@
 //
 
 import SwiftUI
-import Combine
+import Observation
 
 /// 導航座標器協議
 /// 定義所有座標器必須實現的基本功能
-protocol Coordinator: ObservableObject {
+protocol Coordinator: AnyObject, Observable {
     /// 座標器的唯一識別符
     var id: UUID { get }
     
@@ -30,23 +30,24 @@ protocol Coordinator: ObservableObject {
     func finish()
     
     /// 添加子座標器
-    func addChild(_ coordinator: any Coordinator)
+    nonisolated func addChild(_ coordinator: any Coordinator)
     
     /// 移除子座標器
-    func removeChild(_ coordinator: any Coordinator)
+    nonisolated func removeChild(_ coordinator: any Coordinator)
     
     /// 移除所有子座標器
-    func removeAllChildren()
+    nonisolated func removeAllChildren()
 }
 
 /// 座標器基類
 /// 提供座標器的基本實現
+@Observable
 @MainActor
 class BaseCoordinator: Coordinator {
     let id = UUID()
     weak var parent: (any Coordinator)?
     var children: [any Coordinator] = []
-    @Published var navigationPath = NavigationPath()
+    var navigationPath = NavigationPath()
     
     init() {}
     

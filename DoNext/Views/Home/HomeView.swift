@@ -12,7 +12,7 @@ import SwiftData
 /// 使用 HomeCoordinator 進行現代化的頁面導航管理
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject var appCoordinator: AppCoordinator
+    @Environment(AppCoordinator.self) var appCoordinator
     
     private var homeCoordinator: HomeCoordinator? {
         appCoordinator.children.first { $0 is HomeCoordinator } as? HomeCoordinator

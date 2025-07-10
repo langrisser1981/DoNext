@@ -34,13 +34,13 @@ struct DoNextApp: App {
     }()
     
     /// 應用程式座標器
-    @StateObject private var appCoordinator = AppCoordinator()
+    @State private var appCoordinator = AppCoordinator()
 
     /// 應用程式場景配置
     var body: some Scene {
         WindowGroup {
             AppCoordinatorView()
-                .environmentObject(appCoordinator)
+                .environment(appCoordinator)
                 .modelContainer(sharedModelContainer)
                 .onAppear {
                     appCoordinator.start()
@@ -52,7 +52,7 @@ struct DoNextApp: App {
 /// 應用程式座標器視圖
 /// 管理應用程式的主要導航流程
 struct AppCoordinatorView: View {
-    @EnvironmentObject var appCoordinator: AppCoordinator
+    @Environment(AppCoordinator.self) var appCoordinator
     
     var body: some View {
         NavigationStack(path: binding(for: appCoordinator.appState)) {
@@ -61,10 +61,16 @@ struct AppCoordinatorView: View {
                     destinationView(for: destination)
                 }
         }
-        .sheet(item: $appCoordinator.presentedSheet) { sheet in
+        .sheet(item: Binding(
+            get: { appCoordinator.presentedSheet },
+            set: { _ in appCoordinator.dismissSheet() }
+        )) { sheet in
             sheetView(for: sheet)
         }
-        .alert(item: $appCoordinator.presentedAlert) { alert in
+        .alert(item: Binding(
+            get: { appCoordinator.presentedAlert },
+            set: { _ in appCoordinator.dismissAlert() }
+        )) { alert in
             alertView(for: alert)
         }
     }

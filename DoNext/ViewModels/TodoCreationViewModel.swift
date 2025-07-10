@@ -7,25 +7,27 @@
 
 import Foundation
 import SwiftData
+import Observation
 
 /// 待辦事項創建 ViewModel
 /// 管理待辦事項創建表單的狀態和業務邏輯
+@Observable
 @MainActor
-final class TodoCreationViewModel: ObservableObject {
+final class TodoCreationViewModel {
     /// 待辦事項標題
-    @Published var title = ""
+    var title = ""
     
     /// 選中的分類索引
-    @Published var selectedCategoryIndex = 0
+    var selectedCategoryIndex = 0
     
     /// 是否啟用提醒
-    @Published var reminderEnabled = false
+    var reminderEnabled = false
     
     /// 提醒時間
-    @Published var reminderDate = Date()
+    var reminderDate = Date()
     
     /// 重複類型
-    @Published var repeatType = RepeatType.none
+    var repeatType = RepeatType.none
     
     /// 表單是否有效
     var isValid: Bool {
