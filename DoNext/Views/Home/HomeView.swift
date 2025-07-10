@@ -14,6 +14,7 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AppCoordinator.self) var appCoordinator
     @Environment(CloudKitManager.self) var cloudKitManager
+    @Environment(NotificationManager.self) var notificationManager
     
     private var homeCoordinator: HomeCoordinator? {
         appCoordinator.children.first { $0 is HomeCoordinator } as? HomeCoordinator
@@ -235,6 +236,18 @@ struct HomeView: View {
     private func toggleTodoCompletion(_ todo: TodoItem) {
         withAnimation(.easeInOut(duration: 0.2)) {
             todo.toggleCompleted()
+            
+            // 如果完成了待辦事項，移除通知
+            if todo.isCompleted {
+                Task {
+                    await notificationManager.removeNotification(for: todo)
+                }
+            } else if todo.reminderDate != nil {
+                // 如果取消完成且有提醒時間，重新排程通知
+                Task {
+                    await notificationManager.scheduleNotification(for: todo)
+                }
+            }
         }
     }
     

@@ -61,6 +61,9 @@ struct DoNextApp: App {
     
     /// CloudKit 同步管理器
     @State private var cloudKitManager = CloudKitManager.shared
+    
+    /// 通知管理器
+    @State private var notificationManager = NotificationManager.shared
 
     /// 應用程式場景配置
     var body: some Scene {
@@ -69,9 +72,14 @@ struct DoNextApp: App {
                 .environment(appCoordinator)
                 .environment(cloudKitManager)
                 .environment(settingsManager)
+                .environment(notificationManager)
                 .modelContainer(createModelContainer())
                 .onAppear {
                     appCoordinator.start()
+                    // 請求通知權限
+                    Task {
+                        await notificationManager.requestAuthorization()
+                    }
                 }
         }
     }
@@ -81,6 +89,8 @@ struct DoNextApp: App {
 /// 管理應用程式的主要導航流程
 struct AppCoordinatorView: View {
     @Environment(AppCoordinator.self) var appCoordinator
+    @Environment(NotificationManager.self) var notificationManager
+    @Environment(\.modelContext) private var modelContext
     
     var body: some View {
         NavigationStack(path: binding(for: appCoordinator.appState)) {
@@ -161,7 +171,19 @@ struct AppCoordinatorView: View {
                 title: Text("確認刪除"),
                 message: Text("您確定要刪除「\(item.title)」嗎？"),
                 primaryButton: .destructive(Text("刪除")) {
-                    // TODO: 實作刪除邏輯
+                    // 先移除通知
+                    Task {
+                        await notificationManager.removeNotification(for: item)
+                    }
+                    
+                    // 刪除待辦事項
+                    modelContext.delete(item)
+                    
+                    do {
+                        try modelContext.save()
+                    } catch {
+                        print("刪除待辦事項失敗: \(error)")
+                    }
                 },
                 secondaryButton: .cancel()
             )

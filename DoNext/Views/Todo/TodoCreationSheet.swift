@@ -13,6 +13,7 @@ import SwiftData
 struct TodoCreationSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(NotificationManager.self) var notificationManager
     @Query private var categories: [Category]
     
     /// 預選的分類
@@ -147,6 +148,14 @@ struct TodoCreationSheet: View {
         
         do {
             try modelContext.save()
+            
+            // 如果有設定提醒，排程通知
+            if reminderEnabled {
+                Task {
+                    await notificationManager.scheduleNotification(for: newTodo)
+                }
+            }
+            
             dismiss()
         } catch {
             print("儲存待辦事項失敗: \(error)")
