@@ -24,6 +24,11 @@ struct HomeView: View {
     @State private var selectedCategoryIndex = 0
     @State private var searchText = ""
     
+    /// 總類別數量（包含"全部"類別）
+    private var totalCategoryCount: Int {
+        return categories.count + 1 // +1 for "全部" category
+    }
+    
     /// 當前選中的分類
     private var selectedCategory: Category? {
         guard selectedCategoryIndex > 0 && selectedCategoryIndex <= categories.count else {
@@ -110,7 +115,9 @@ struct HomeView: View {
                     isSelected: selectedCategoryIndex == 0,
                     count: allTodos.count
                 ) {
-                    selectedCategoryIndex = 0
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        selectedCategoryIndex = 0
+                    }
                 }
                 
                 // 各分類標籤
@@ -121,7 +128,9 @@ struct HomeView: View {
                         isSelected: selectedCategoryIndex == index + 1,
                         count: category.todos.count
                     ) {
-                        selectedCategoryIndex = index + 1
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            selectedCategoryIndex = index + 1
+                        }
                     }
                 }
                 
@@ -160,6 +169,12 @@ struct HomeView: View {
                 .listStyle(PlainListStyle())
             }
         }
+        .gesture(
+            DragGesture()
+                .onEnded { gesture in
+                    handleSwipeGesture(gesture)
+                }
+        )
     }
     
     /// 空狀態視圖
@@ -208,6 +223,51 @@ struct HomeView: View {
     private func toggleTodoCompletion(_ todo: TodoItem) {
         withAnimation(.easeInOut(duration: 0.2)) {
             todo.toggleCompleted()
+        }
+    }
+    
+    /// 處理滑動手勢
+    private func handleSwipeGesture(_ gesture: DragGesture.Value) {
+        let minimumSwipeDistance: CGFloat = 50
+        let horizontalDistance = gesture.translation.width
+        let verticalDistance = abs(gesture.translation.height)
+        
+        // 確保是水平滑動且距離足夠
+        guard abs(horizontalDistance) > minimumSwipeDistance,
+              abs(horizontalDistance) > verticalDistance * 2 else {
+            return
+        }
+        
+        if horizontalDistance > 0 {
+            // 右滑 - 切換到上一個類別
+            switchToPreviousCategory()
+        } else {
+            // 左滑 - 切換到下一個類別
+            switchToNextCategory()
+        }
+    }
+    
+    /// 切換到上一個類別
+    private func switchToPreviousCategory() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            if selectedCategoryIndex > 0 {
+                selectedCategoryIndex -= 1
+            } else {
+                // 如果在第一個類別，切換到最後一個
+                selectedCategoryIndex = totalCategoryCount - 1
+            }
+        }
+    }
+    
+    /// 切換到下一個類別
+    private func switchToNextCategory() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            if selectedCategoryIndex < totalCategoryCount - 1 {
+                selectedCategoryIndex += 1
+            } else {
+                // 如果在最後一個類別，切換到第一個
+                selectedCategoryIndex = 0
+            }
         }
     }
 }
