@@ -1,5 +1,5 @@
 //
-//  HomeView.swift
+//  HomeView_NavigationStack.swift
 //  DoNext
 //
 //  Created by Lenny Cheng on 2025/7/9.
@@ -8,18 +8,20 @@
 import SwiftUI
 import SwiftData
 
-/// 主頁面視圖
-/// 包含待辦事項列表、分類標籤頁和新增待辦事項的浮動按鈕
+/// 主頁面視圖 (Coordinator 版本)
+/// 使用 HomeCoordinator 進行現代化的頁面導航管理
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject var appState: AppState
+    @EnvironmentObject var appCoordinator: AppCoordinator
+    
+    private var homeCoordinator: HomeCoordinator? {
+        appCoordinator.children.first { $0 is HomeCoordinator } as? HomeCoordinator
+    }
     
     @Query private var categories: [Category]
     @Query private var allTodos: [TodoItem]
     
     @State private var selectedCategoryIndex = 0
-    @State private var showingNewTodoSheet = false
-    @State private var showingNewCategorySheet = false
     @State private var searchText = ""
     
     /// 當前選中的分類
@@ -42,28 +44,24 @@ struct HomeView: View {
     }
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // 搜索欄
-                searchSection
-                
-                // 分類標籤頁
-                categoryTabs
-                
-                // 待辦事項列表
-                todoList
-            }
-            .navigationTitle("DoNext")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        Button("登出", role: .destructive) {
-                            signOut()
-                        }
-                    } label: {
-                        Image(systemName: "person.circle")
-                    }
+        VStack(spacing: 0) {
+            // 搜索欄
+            searchSection
+            
+            // 分類標籤頁
+            categoryTabs
+            
+            // 待辦事項列表
+            todoList
+        }
+        .navigationTitle("DoNext")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    homeCoordinator?.showSettings()
+                } label: {
+                    Image(systemName: "person.circle")
                 }
             }
         }
@@ -72,12 +70,6 @@ struct HomeView: View {
             floatingAddButton,
             alignment: .bottomTrailing
         )
-        .sheet(isPresented: $showingNewTodoSheet) {
-            TodoCreationSheet(selectedCategory: selectedCategory)
-        }
-        .sheet(isPresented: $showingNewCategorySheet) {
-            CategoryCreationSheet()
-        }
     }
     
     /// 搜索區域
@@ -135,7 +127,7 @@ struct HomeView: View {
                 
                 // 新增分類按鈕
                 AddCategoryButton {
-                    showingNewCategorySheet = true
+                    homeCoordinator?.showCategoryCreation()
                 }
             }
             .padding(.horizontal, 16)
@@ -155,8 +147,15 @@ struct HomeView: View {
                         TodoRowView(todo: todo) {
                             toggleTodoCompletion(todo)
                         }
+                        .onTapGesture {
+                            homeCoordinator?.showTodoDetail(todo)
+                        }
+                        .swipeActions(edge: .trailing) {
+                            Button("刪除", role: .destructive) {
+                                homeCoordinator?.showDeleteConfirmation(for: todo)
+                            }
+                        }
                     }
-                    .onDelete(perform: deleteTodos)
                 }
                 .listStyle(PlainListStyle())
             }
@@ -191,7 +190,7 @@ struct HomeView: View {
     /// 浮動新增按鈕
     private var floatingAddButton: some View {
         Button(action: {
-            showingNewTodoSheet = true
+            homeCoordinator?.showTodoCreation(selectedCategory: selectedCategory)
         }) {
             Image(systemName: "plus")
                 .font(.system(size: 24, weight: .medium))
@@ -209,26 +208,6 @@ struct HomeView: View {
     private func toggleTodoCompletion(_ todo: TodoItem) {
         withAnimation(.easeInOut(duration: 0.2)) {
             todo.toggleCompleted()
-        }
-    }
-    
-    /// 刪除待辦事項
-    private func deleteTodos(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(filteredTodos[index])
-            }
-        }
-    }
-    
-    /// 登出
-    private func signOut() {
-        Task {
-            do {
-                try await appState.signOut()
-            } catch {
-                print("登出失敗: \(error)")
-            }
         }
     }
 }
@@ -352,14 +331,4 @@ struct TodoRowView: View {
         .padding(.vertical, 8)
         .contentShape(Rectangle())
     }
-}
-
-
-
-// MARK: - 預覽
-
-#Preview {
-    HomeView()
-        .environmentObject(AppState())
-        .modelContainer(for: [TodoItem.self, Category.self], inMemory: true)
 }

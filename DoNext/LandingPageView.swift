@@ -10,7 +10,7 @@ import SwiftUI
 /// 引導頁面視圖
 /// 提供多頁面的應用程式介紹，包含頁面指示器和可配置的內容
 struct LandingPageView: View {
-    @EnvironmentObject var appState: AppState
+    @EnvironmentObject var appCoordinator: AppCoordinator
     @State private var currentPage = 0
     @State private var dragOffset: CGSize = .zero
     
@@ -88,12 +88,12 @@ struct LandingPageView: View {
     
     /// 跳過引導流程
     private func skipOnboarding() {
-        appState.completeOnboarding()
+        appCoordinator.completeOnboarding()
     }
     
     /// 完成引導流程
     private func completeOnboarding() {
-        appState.completeOnboarding()
+        appCoordinator.completeOnboarding()
     }
 }
 
@@ -270,5 +270,5 @@ struct OnboardingConfiguration {
 
 #Preview {
     LandingPageView()
-        .environmentObject(AppState())
+        .environmentObject(AppCoordinator())
 }
