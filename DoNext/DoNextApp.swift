@@ -12,27 +12,41 @@ import SwiftData
 /// 使用 Coordinator Pattern 進行現代化的頁面導航管理
 @main
 struct DoNextApp: App {
-    /// 共享的 SwiftData 模型容器
-    /// 包含所有資料模型的配置和持久化設定，支援 iCloud 同步
-    var sharedModelContainer: ModelContainer = {
+    /// 設定管理器
+    private let settingsManager = SettingsManager.shared
+    
+    /// 創建共享的 SwiftData 模型容器
+    /// 包含所有資料模型的配置和持久化設定，根據用戶設定決定是否啟用 iCloud 同步
+    private func createModelContainer() -> ModelContainer {
         let schema = Schema([
             TodoItem.self,
             Category.self,
         ])
         
-        // 配置模型容器，啟用 CloudKit 同步
-        let modelConfiguration = ModelConfiguration(
-            schema: schema,
-            isStoredInMemoryOnly: false,
-            cloudKitDatabase: .automatic
-        )
+        // 根據用戶設定決定是否啟用 CloudKit 同步
+        let modelConfiguration: ModelConfiguration
+        
+        if settingsManager.isCloudSyncEnabled && settingsManager.shouldShowCloudSyncOption {
+            // 啟用 CloudKit 同步
+            modelConfiguration = ModelConfiguration(
+                schema: schema,
+                isStoredInMemoryOnly: false,
+                cloudKitDatabase: .automatic
+            )
+        } else {
+            // 僅本地存儲
+            modelConfiguration = ModelConfiguration(
+                schema: schema,
+                isStoredInMemoryOnly: false
+            )
+        }
 
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
             fatalError("無法建立 ModelContainer: \(error)")
         }
-    }()
+    }
     
     /// 應用程式座標器
     @State private var appCoordinator = AppCoordinator()
@@ -46,7 +60,8 @@ struct DoNextApp: App {
             AppCoordinatorView()
                 .environment(appCoordinator)
                 .environment(cloudKitManager)
-                .modelContainer(sharedModelContainer)
+                .environment(settingsManager)
+                .modelContainer(createModelContainer())
                 .onAppear {
                     appCoordinator.start()
                 }

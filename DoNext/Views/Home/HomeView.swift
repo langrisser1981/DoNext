@@ -69,7 +69,7 @@ struct HomeView: View {
                         await cloudKitManager.refreshSyncStatus()
                     }
                 } label: {
-                    Image(systemName: cloudKitManager.syncStatus.systemImage)
+                    Image(systemName: cloudKitManager.effectiveSyncStatus.systemImage)
                         .foregroundColor(syncStatusColor)
                 }
             }
@@ -294,6 +294,8 @@ struct HomeView: View {
             return .orange
         case .unknown:
             return .gray
+        case .disabled:
+            return .secondary
         }
     }
 }
