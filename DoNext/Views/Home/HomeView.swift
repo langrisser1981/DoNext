@@ -13,6 +13,7 @@ import SwiftData
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AppCoordinator.self) var appCoordinator
+    @Environment(CloudKitManager.self) var cloudKitManager
     
     private var homeCoordinator: HomeCoordinator? {
         appCoordinator.children.first { $0 is HomeCoordinator } as? HomeCoordinator
@@ -62,6 +63,17 @@ struct HomeView: View {
         .navigationTitle("DoNext")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
+                    Task {
+                        await cloudKitManager.refreshSyncStatus()
+                    }
+                } label: {
+                    Image(systemName: cloudKitManager.syncStatus.systemImage)
+                        .foregroundColor(syncStatusColor)
+                }
+            }
+            
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     homeCoordinator?.showSettings()
@@ -268,6 +280,20 @@ struct HomeView: View {
                 // 如果在最後一個類別，切換到第一個
                 selectedCategoryIndex = 0
             }
+        }
+    }
+    
+    /// 同步狀態顏色
+    private var syncStatusColor: Color {
+        switch cloudKitManager.syncStatus {
+        case .available:
+            return .green
+        case .noAccount, .restricted, .error:
+            return .red
+        case .temporarilyUnavailable:
+            return .orange
+        case .unknown:
+            return .gray
         }
     }
 }

@@ -10,6 +10,7 @@ import SwiftData
 
 /// 分類模型
 /// 用於組織待辦事項，支援顏色標識和層級管理
+/// 支援 iCloud CloudKit 同步
 @Model
 final class Category {
     /// 分類的唯一識別符

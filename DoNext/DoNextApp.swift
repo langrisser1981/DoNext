@@ -13,17 +13,18 @@ import SwiftData
 @main
 struct DoNextApp: App {
     /// 共享的 SwiftData 模型容器
-    /// 包含所有資料模型的配置和持久化設定
+    /// 包含所有資料模型的配置和持久化設定，支援 iCloud 同步
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             TodoItem.self,
             Category.self,
         ])
         
-        // 配置模型容器，啟用持久化存儲
+        // 配置模型容器，啟用 CloudKit 同步
         let modelConfiguration = ModelConfiguration(
             schema: schema,
-            isStoredInMemoryOnly: false
+            isStoredInMemoryOnly: false,
+            cloudKitDatabase: .automatic
         )
 
         do {
@@ -35,12 +36,16 @@ struct DoNextApp: App {
     
     /// 應用程式座標器
     @State private var appCoordinator = AppCoordinator()
+    
+    /// CloudKit 同步管理器
+    @State private var cloudKitManager = CloudKitManager.shared
 
     /// 應用程式場景配置
     var body: some Scene {
         WindowGroup {
             AppCoordinatorView()
                 .environment(appCoordinator)
+                .environment(cloudKitManager)
                 .modelContainer(sharedModelContainer)
                 .onAppear {
                     appCoordinator.start()

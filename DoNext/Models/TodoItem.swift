@@ -10,6 +10,7 @@ import SwiftData
 
 /// 待辦事項模型
 /// 使用 SwiftData 進行持久化存儲，包含完整的待辦事項屬性和操作方法
+/// 支援 iCloud CloudKit 同步
 @Model
 final class TodoItem {
     /// 待辦事項的唯一識別符
