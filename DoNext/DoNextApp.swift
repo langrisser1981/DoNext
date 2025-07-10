@@ -26,6 +26,7 @@ struct DoNextApp: App {
         // 根據用戶設定決定是否啟用 CloudKit 同步
         let modelConfiguration: ModelConfiguration
         
+        #if CLOUDKIT_ENABLED
         if settingsManager.isCloudSyncEnabled && settingsManager.shouldShowCloudSyncOption {
             // 啟用 CloudKit 同步
             modelConfiguration = ModelConfiguration(
@@ -40,6 +41,13 @@ struct DoNextApp: App {
                 isStoredInMemoryOnly: false
             )
         }
+        #else
+        // 免費開發者帳號：僅支援本地存儲
+        modelConfiguration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false
+        )
+        #endif
 
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])

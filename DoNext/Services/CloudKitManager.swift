@@ -6,7 +6,9 @@
 //
 
 import Foundation
+#if CLOUDKIT_ENABLED
 import CloudKit
+#endif
 import SwiftData
 import Observation
 
@@ -24,8 +26,10 @@ final class CloudKitManager {
     /// 同步錯誤訊息
     var errorMessage: String?
     
+    #if CLOUDKIT_ENABLED
     /// CloudKit 容器
     private let container = CKContainer(identifier: "iCloud.com.lenny.DoNext")
+    #endif
     
     /// 設定管理器
     private let settingsManager = SettingsManager.shared
@@ -47,6 +51,7 @@ final class CloudKitManager {
     
     /// 檢查 iCloud 帳號狀態
     func checkAccountStatus() async {
+        #if CLOUDKIT_ENABLED
         do {
             let status = try await container.accountStatus()
             
@@ -82,6 +87,12 @@ final class CloudKitManager {
             errorMessage = "檢查 iCloud 帳號狀態時發生錯誤：\(error.localizedDescription)"
             settingsManager.setCloudSyncAvailability(false)
         }
+        #else
+        // 免費開發者帳號：CloudKit 不可用
+        syncStatus = .noAccount
+        errorMessage = "CloudKit 功能需要付費開發者帳號"
+        settingsManager.setCloudSyncAvailability(false)
+        #endif
     }
     
     /// 手動觸發同步檢查

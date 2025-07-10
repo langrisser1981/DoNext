@@ -6,6 +6,7 @@
     <true/>
     <key>com.apple.security.files.user-selected.read-only</key>
     <true/>
+    <!-- CloudKit entitlements (需要付費開發者帳號)
     <key>com.apple.developer.icloud-container-identifiers</key>
     <array>
         <string>iCloud.com.lenny.DoNext</string>
@@ -16,5 +17,6 @@
     </array>
     <key>com.apple.developer.ubiquity-kvstore-identifier</key>
     <string>$(TeamIdentifierPrefix)com.lenny.DoNext</string>
+    -->
 </dict>
 </plist>
