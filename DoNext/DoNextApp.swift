@@ -143,8 +143,12 @@ struct AppCoordinatorView: View {
         switch sheet {
         case .todoCreation(let selectedCategory):
             TodoCreationSheet(selectedCategory: selectedCategory)
+        case .todoEdit(let todoItem):
+            TodoEditSheet(todoItem: todoItem)
         case .categoryCreation:
             CategoryCreationSheet()
+        case .categoryEdit(let category):
+            CategoryEditSheet(category: category)
         case .todoDetail(let todoItem):
             TodoDetailView(todoItem: todoItem)
         case .settings:
@@ -187,6 +191,15 @@ struct AppCoordinatorView: View {
                 },
                 secondaryButton: .cancel()
             )
+        case .categoryDeleteConfirmation(let category):
+            return Alert(
+                title: Text("確認刪除分類"),
+                message: Text("您確定要刪除「\(category.name)」分類嗎？此分類下的所有待辦事項將會被取消分類。"),
+                primaryButton: .destructive(Text("刪除")) {
+                    deleteCategoryWithCleanup(category)
+                },
+                secondaryButton: .cancel()
+            )
         case .error(let message):
             return Alert(
                 title: Text("錯誤"),
@@ -205,6 +218,23 @@ struct AppCoordinatorView: View {
             )
         }
         return .constant(NavigationPath())
+    }
+    
+    /// 刪除分類並清理相關待辦事項
+    private func deleteCategoryWithCleanup(_ category: Category) {
+        // 將該分類下的所有待辦事項的 category 設為 nil
+        for todo in category.todos {
+            todo.category = nil
+        }
+        
+        // 刪除分類
+        modelContext.delete(category)
+        
+        do {
+            try modelContext.save()
+        } catch {
+            print("刪除分類失敗: \(error)")
+        }
     }
 }
 

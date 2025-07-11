@@ -5,8 +5,8 @@
 //  Created by Lenny Cheng on 2025/7/9.
 //
 
-import SwiftUI
 import Observation
+import SwiftUI
 
 /// 應用程式主座標器
 /// 管理整個應用程式的導航流程和狀態
@@ -121,7 +121,7 @@ final class AppCoordinator: BaseCoordinator, AppCoordinatorProtocol {
     
     /// 設定驗證策略
     func setAuthStrategy(_ strategy: AuthenticationStrategy) {
-        self.authStrategy = strategy
+        authStrategy = strategy
     }
     
     /// 執行登入
@@ -132,7 +132,7 @@ final class AppCoordinator: BaseCoordinator, AppCoordinatorProtocol {
         
         do {
             let result = try await strategy.signIn()
-            self.currentUser = result
+            currentUser = result
             handleLoginCompleted()
         } catch {
             throw error
@@ -157,14 +157,18 @@ final class AppCoordinator: BaseCoordinator, AppCoordinatorProtocol {
 /// Sheet 目標定義
 enum SheetDestination: Identifiable {
     case todoCreation(selectedCategory: Category?)
+    case todoEdit(todoItem: TodoItem)
     case categoryCreation
+    case categoryEdit(category: Category)
     case todoDetail(todoItem: TodoItem)
     case settings
     
     var id: String {
         switch self {
         case .todoCreation: return "todoCreation"
+        case .todoEdit: return "todoEdit"
         case .categoryCreation: return "categoryCreation"
+        case .categoryEdit: return "categoryEdit"
         case .todoDetail: return "todoDetail"
         case .settings: return "settings"
         }
@@ -175,14 +179,15 @@ enum SheetDestination: Identifiable {
 enum AlertDestination: Identifiable {
     case signOutConfirmation
     case deleteConfirmation(item: TodoItem)
+    case categoryDeleteConfirmation(category: Category)
     case error(message: String)
     
     var id: String {
         switch self {
         case .signOutConfirmation: return "signOutConfirmation"
         case .deleteConfirmation: return "deleteConfirmation"
+        case .categoryDeleteConfirmation: return "categoryDeleteConfirmation"
         case .error: return "error"
         }
     }
 }
-

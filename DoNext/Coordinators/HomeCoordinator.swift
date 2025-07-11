@@ -42,9 +42,19 @@ final class HomeCoordinator: BaseCoordinator {
         appCoordinator?.presentSheet(.todoCreation(selectedCategory: selectedCategory))
     }
     
+    /// 顯示編輯待辦事項 Sheet
+    func showTodoEdit(_ todoItem: TodoItem) {
+        appCoordinator?.presentSheet(.todoEdit(todoItem: todoItem))
+    }
+    
     /// 顯示新增分類 Sheet
     func showCategoryCreation() {
         appCoordinator?.presentSheet(.categoryCreation)
+    }
+    
+    /// 顯示編輯分類 Sheet
+    func showCategoryEdit(_ category: Category) {
+        appCoordinator?.presentSheet(.categoryEdit(category: category))
     }
     
     /// 顯示待辦事項詳情 Sheet
@@ -67,6 +77,11 @@ final class HomeCoordinator: BaseCoordinator {
     /// 顯示刪除確認 Alert
     func showDeleteConfirmation(for item: TodoItem) {
         appCoordinator?.presentAlert(.deleteConfirmation(item: item))
+    }
+    
+    /// 顯示分類刪除確認 Alert
+    func showCategoryDeleteConfirmation(for category: Category) {
+        appCoordinator?.presentAlert(.categoryDeleteConfirmation(category: category))
     }
     
     /// 顯示錯誤 Alert
