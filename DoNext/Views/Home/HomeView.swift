@@ -26,6 +26,10 @@ struct HomeView: View {
     @State private var selectedCategoryIndex = 0
     @State private var searchText = ""
     
+    // Action Bar 狀態
+    @State private var showActionBar = false
+    @State private var actionBarCategory: Category?
+    
     /// 總類別數量（包含"全部"類別）
     private var totalCategoryCount: Int {
         return categories.count + 1 // +1 for "全部" category
@@ -51,185 +55,132 @@ struct HomeView: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // 搜索欄
-            searchSection
-            
-            // 分類標籤頁
-            categoryTabs
-            
-            // 待辦事項列表
-            todoList
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                HomeSearchBar(searchText: $searchText)
+                
+                HomeCategoryTabs(
+                    categories: categories,
+                    selectedIndex: $selectedCategoryIndex,
+                    allTodosCount: allTodos.count,
+                    onCategorySelected: handleCategorySelection,
+                    onAddCategory: { homeCoordinator?.showCategoryCreation() },
+                    onCategoryLongPress: { showActionBarForCategory($0) }
+                )
+                
+                HomeTodoListContainer(
+                    todos: filteredTodos,
+                    onTodoToggle: toggleTodoCompletion,
+                    onTodoTap: { homeCoordinator?.showTodoDetail($0) },
+                    onTodoDelete: { homeCoordinator?.showDeleteConfirmation(for: $0) }
+                )
+            }
+            .simultaneousGesture(
+                // 整個畫面的邊緣滑動手勢
+                DragGesture()
+                    .onEnded { gesture in
+                        let horizontalDistance = abs(gesture.translation.width)
+                        let verticalDistance = abs(gesture.translation.height)
+                        let startLocation = gesture.startLocation
+                        
+                        // 使用實際的螢幕寬度
+                        let screenWidth = geometry.size.width
+                        let edgeThreshold: CGFloat = 50 // 邊緣區域的寬度
+                        
+                        // 檢查是否從螢幕邊緣開始滑動
+                        let isFromLeftEdge = startLocation.x <= edgeThreshold
+                        let isFromRightEdge = startLocation.x >= screenWidth - edgeThreshold
+                        let isFromEdge = isFromLeftEdge || isFromRightEdge
+                        
+                        // 檢查滑動是否有效（相對寬鬆的條件）
+                        let isMainlyHorizontal = horizontalDistance > verticalDistance
+                        let hasMinimumDistance = horizontalDistance > 30
+                        
+                        if isFromEdge && isMainlyHorizontal && hasMinimumDistance {
+                            handleSwipeGesture(gesture)
+                        }
+                    }
+            )
         }
         .navigationTitle("DoNext")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button {
-                    Task {
-                        await cloudKitManager.refreshSyncStatus()
-                    }
-                } label: {
-                    Image(systemName: cloudKitManager.effectiveSyncStatus.systemImage)
-                        .foregroundColor(syncStatusColor)
-                }
-            }
-            
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    homeCoordinator?.showSettings()
-                } label: {
-                    Image(systemName: "person.circle")
-                }
-            }
+            HomeToolbarContent(
+                syncStatus: cloudKitManager.effectiveSyncStatus,
+                onSyncRefresh: {
+                    Task { await cloudKitManager.refreshSyncStatus() }
+                },
+                onShowSettings: { homeCoordinator?.showSettings() }
+            )
         }
         .overlay(
-            // 浮動新增按鈕
-            floatingAddButton,
+            HomeFloatingAddButton {
+                homeCoordinator?.showTodoCreation(selectedCategory: selectedCategory)
+            },
             alignment: .bottomTrailing
         )
-    }
-    
-    /// 搜索區域
-    private var searchSection: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.secondary)
-                
-                TextField("搜索待辦事項", text: $searchText)
-                    .textFieldStyle(PlainTextFieldStyle())
-                
-                if !searchText.isEmpty {
-                    Button("取消") {
-                        searchText = ""
-                    }
-                    .foregroundColor(.blue)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(Color(.systemGray6))
-            .cornerRadius(10)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-        }
-        .background(Color(.systemBackground))
-    }
-    
-    /// 分類標籤頁
-    private var categoryTabs: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                // 全部分類標籤
-                CategoryTab(
-                    title: "全部",
-                    color: .blue,
-                    isSelected: selectedCategoryIndex == 0,
-                    count: allTodos.count
-                ) {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        selectedCategoryIndex = 0
-                    }
-                }
-                
-                // 各分類標籤
-                ForEach(Array(categories.enumerated()), id: \.element.id) { index, category in
-                    CategoryTab(
-                        title: category.name,
-                        color: Color(hex: category.color),
-                        isSelected: selectedCategoryIndex == index + 1,
-                        count: category.todos.count
-                    ) {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            selectedCategoryIndex = index + 1
-                        }
-                    }
-                }
-                
-                // 新增分類按鈕
-                AddCategoryButton {
-                    homeCoordinator?.showCategoryCreation()
-                }
-            }
-            .padding(.horizontal, 16)
-        }
-        .padding(.vertical, 8)
-        .background(Color(.systemBackground))
-    }
-    
-    /// 待辦事項列表
-    private var todoList: some View {
-        Group {
-            if filteredTodos.isEmpty {
-                emptyStateView
-            } else {
-                List {
-                    ForEach(filteredTodos) { todo in
-                        TodoRowView(todo: todo) {
-                            toggleTodoCompletion(todo)
-                        }
-                        .onTapGesture {
-                            homeCoordinator?.showTodoDetail(todo)
-                        }
-                        .swipeActions(edge: .trailing) {
-                            Button("刪除", role: .destructive) {
-                                homeCoordinator?.showDeleteConfirmation(for: todo)
+        .overlay(
+            // Action Bar Overlay - 顯示在最上層
+            Group {
+                if showActionBar, let category = actionBarCategory {
+                    ZStack {
+                        // 背景遮罩 - 點擊可關閉 Action Bar
+                        Color.black.opacity(0.3)
+                            .ignoresSafeArea()
+                            .onTapGesture {
+                                dismissActionBar()
                             }
+                        
+                        // Action Bar 顯示在螢幕上方
+                        VStack {
+                            CategoryActionBar(
+                                category: category,
+                                onEdit: { 
+                                    dismissActionBar()
+                                    homeCoordinator?.showCategoryEdit($0) 
+                                },
+                                onDelete: { 
+                                    dismissActionBar()
+                                    homeCoordinator?.showCategoryDeleteConfirmation(for: $0) 
+                                },
+                                onDismiss: { dismissActionBar() }
+                            )
+                            .padding(.top, 120) // 調整距離頂部的位置
+                            
+                            Spacer()
                         }
                     }
+                    .animation(.easeInOut(duration: 0.3), value: showActionBar)
                 }
-                .listStyle(PlainListStyle())
             }
-        }
-        .gesture(
-            DragGesture()
-                .onEnded { gesture in
-                    handleSwipeGesture(gesture)
-                }
         )
     }
     
-    /// 空狀態視圖
-    private var emptyStateView: some View {
-        VStack(spacing: 20) {
-            Spacer()
-            
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 60))
-                .foregroundColor(.blue.opacity(0.6))
-            
-            Text("還沒有待辦事項")
-                .font(.headline)
-                .foregroundColor(.secondary)
-            
-            Text("點擊右下角的 + 按鈕來新增您的第一個待辦事項")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-            
-            Spacer()
+    
+    /// 處理分類選擇
+    private func handleCategorySelection(_ index: Int) {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            selectedCategoryIndex = index
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemBackground))
     }
     
-    /// 浮動新增按鈕
-    private var floatingAddButton: some View {
-        Button(action: {
-            homeCoordinator?.showTodoCreation(selectedCategory: selectedCategory)
-        }) {
-            Image(systemName: "plus")
-                .font(.system(size: 24, weight: .medium))
-                .foregroundColor(.white)
-                .frame(width: 56, height: 56)
-                .background(Color.blue)
-                .clipShape(Circle())
-                .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+    /// 顯示 Action Bar
+    private func showActionBarForCategory(_ category: Category) {
+        actionBarCategory = category
+        withAnimation(.easeInOut(duration: 0.3)) {
+            showActionBar = true
         }
-        .padding(.trailing, 20)
-        .padding(.bottom, 20)
+    }
+    
+    /// 隱藏 Action Bar
+    private func dismissActionBar() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            showActionBar = false
+        }
+        // 延遲清除 category 以保持動畫效果
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            actionBarCategory = nil
+        }
     }
     
     /// 切換待辦事項完成狀態
@@ -296,19 +247,4 @@ struct HomeView: View {
         }
     }
     
-    /// 同步狀態顏色
-    private var syncStatusColor: Color {
-        switch cloudKitManager.syncStatus {
-        case .available:
-            return .green
-        case .noAccount, .restricted, .error:
-            return .red
-        case .temporarilyUnavailable:
-            return .orange
-        case .unknown:
-            return .gray
-        case .disabled:
-            return .secondary
-        }
-    }
 }

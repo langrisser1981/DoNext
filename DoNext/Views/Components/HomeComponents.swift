@@ -14,42 +14,58 @@ struct CategoryTab: View {
     let isSelected: Bool
     let count: Int
     let action: () -> Void
+    let onLongPress: (() -> Void)?
+    
+    @State private var isLongPressing = false
     
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(color)
-                    .frame(width: 8, height: 8)
-                
-                Text(title)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(isSelected ? .white : .primary)
-                
-                if count > 0 {
-                    Text("\(count)")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(
-                            Capsule()
-                                .fill(isSelected ? Color.white.opacity(0.2) : Color.gray.opacity(0.2))
-                        )
-                }
+        HStack(spacing: 6) {
+            Circle()
+                .fill(color)
+                .frame(width: 8, height: 8)
+            
+            Text(title)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(isSelected ? .white : .primary)
+            
+            if count > 0 {
+                Text("\(count)")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(
+                        Capsule()
+                            .fill(isSelected ? Color.white.opacity(0.2) : Color.gray.opacity(0.2))
+                    )
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                Capsule()
-                    .fill(isSelected ? color : Color.clear)
-            )
-            .overlay(
-                Capsule()
-                    .stroke(isSelected ? Color.clear : color, lineWidth: 1)
-            )
         }
-        .buttonStyle(PlainButtonStyle())
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            Capsule()
+                .fill(isSelected ? color : Color.clear)
+        )
+        .overlay(
+            Capsule()
+                .stroke(isSelected ? Color.clear : color, lineWidth: 1)
+        )
+        .scaleEffect(isLongPressing ? 0.95 : 1.0)
+        .animation(.easeInOut(duration: 0.1), value: isLongPressing)
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.5)
+                .onChanged { _ in
+                    isLongPressing = true
+                }
+                .onEnded { _ in
+                    isLongPressing = false
+                    onLongPress?()
+                }
+        )
+        .onTapGesture {
+            // 簡單的點擊處理
+            action()
+        }
     }
 }
 
