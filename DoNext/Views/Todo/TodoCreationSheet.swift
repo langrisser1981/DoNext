@@ -37,28 +37,28 @@ struct TodoCreationSheet: View {
     var body: some View {
         NavigationView {
             Form {
-                titleSection
-                categorySection
-                reminderSection
-                if reminderEnabled {
-                    repeatSection
-                }
+                TodoFormTitleSection(title: $title)
+                
+                TodoFormCategorySection(
+                    categories: categories,
+                    selectedIndex: $selectedCategoryIndex
+                )
+                
+                TodoFormReminderSection(
+                    reminderEnabled: $reminderEnabled,
+                    reminderDate: $reminderDate
+                )
+                
+                todoFormRepeatSection
             }
             .navigationTitle("新增待辦事項")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("取消") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("儲存") {
-                        saveTodo()
-                    }
-                    .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }
+                TodoFormToolbarContent(
+                    canSave: !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                    onCancel: { dismiss() },
+                    onSave: { saveTodo() }
+                )
             }
         }
         .onAppear {
@@ -66,62 +66,11 @@ struct TodoCreationSheet: View {
         }
     }
     
-    /// 標題輸入區域
-    private var titleSection: some View {
-        Section {
-            TextField("輸入待辦事項", text: $title)
-                .font(.body)
-        } header: {
-            Text("標題")
-        }
-    }
-    
-    /// 分類選擇區域
-    private var categorySection: some View {
-        Section {
-            Picker("分類", selection: $selectedCategoryIndex) {
-                Text("無分類").tag(0)
-                ForEach(Array(categories.enumerated()), id: \.element.id) { index, category in
-                    HStack {
-                        Circle()
-                            .fill(Color(hex: category.color))
-                            .frame(width: 12, height: 12)
-                        Text(category.name)
-                    }
-                    .tag(index + 1)
-                }
-            }
-            .pickerStyle(MenuPickerStyle())
-        } header: {
-            Text("分類")
-        }
-    }
-    
-    /// 提醒設定區域
-    private var reminderSection: some View {
-        Section {
-            Toggle("設定提醒", isOn: $reminderEnabled)
-            
-            if reminderEnabled {
-                DatePicker("提醒時間", selection: $reminderDate, displayedComponents: [.date, .hourAndMinute])
-                    .datePickerStyle(GraphicalDatePickerStyle())
-            }
-        } header: {
-            Text("提醒")
-        }
-    }
-    
-    /// 重複設定區域
-    private var repeatSection: some View {
-        Section {
-            Picker("重複", selection: $repeatType) {
-                ForEach(RepeatType.allCases, id: \.self) { type in
-                    Text(type.displayName).tag(type)
-                }
-            }
-            .pickerStyle(MenuPickerStyle())
-        } header: {
-            Text("重複")
+    /// 條件顯示的重複設定區段
+    @ViewBuilder
+    private var todoFormRepeatSection: some View {
+        if reminderEnabled {
+            TodoFormRepeatSection(repeatType: $repeatType)
         }
     }
     
