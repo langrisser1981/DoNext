@@ -14,6 +14,7 @@ struct TodoCreationSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(NotificationManager.self) var notificationManager
+    @Environment(AppCoordinator.self) var appCoordinator
     @Query private var categories: [Category]
     
     /// 預選的分類
@@ -124,7 +125,11 @@ struct TodoCreationSheet: View {
         
         modelContext.insert(newTodo)
         
-        if modelContext.saveTodoItem() {
+        let success = modelContext.saveTodoItem { error, message in
+            appCoordinator.presentAlert(.error(message: "\(message): \(error.localizedDescription)"))
+        }
+        
+        if success {
             // 如果有設定提醒，排程通知
             if reminderEnabled {
                 Task {

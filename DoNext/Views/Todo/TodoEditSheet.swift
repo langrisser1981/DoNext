@@ -14,6 +14,7 @@ struct TodoEditSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(NotificationManager.self) var notificationManager
+    @Environment(AppCoordinator.self) var appCoordinator
     @Query private var categories: [Category]
     
     /// 要編輯的待辦事項
@@ -140,7 +141,11 @@ struct TodoEditSheet: View {
         todoItem.reminderDate = reminderEnabled ? reminderDate : nil
         todoItem.repeatType = reminderEnabled ? repeatType : .none
         
-        if modelContext.updateTodoItem() {
+        let success = modelContext.updateTodoItem { error, message in
+            appCoordinator.presentAlert(.error(message: "\(message): \(error.localizedDescription)"))
+        }
+        
+        if success {
             // 處理通知
             Task {
                 // 先移除舊的通知

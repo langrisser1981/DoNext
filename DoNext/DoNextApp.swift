@@ -193,7 +193,9 @@ struct AppCoordinatorView: View {
         
         // 刪除待辦事項
         modelContext.delete(item)
-        modelContext.deleteTodoItem(appCoordinator: appCoordinator)
+        modelContext.deleteTodoItem { [weak appCoordinator] error, message in
+            appCoordinator?.presentAlert(.error(message: "\(message): \(error.localizedDescription)"))
+        }
     }
     
     /// 刪除分類並清理相關待辦事項
@@ -205,7 +207,9 @@ struct AppCoordinatorView: View {
         
         // 刪除分類
         modelContext.delete(category)
-        modelContext.deleteCategory(appCoordinator: appCoordinator)
+        modelContext.deleteCategory { [weak appCoordinator] error, message in
+            appCoordinator?.presentAlert(.error(message: "\(message): \(error.localizedDescription)"))
+        }
     }
 }
 

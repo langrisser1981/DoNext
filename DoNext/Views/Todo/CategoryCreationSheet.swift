@@ -13,6 +13,7 @@ import SwiftData
 struct CategoryCreationSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppCoordinator.self) var appCoordinator
     
     /// 表單狀態
     @State private var name = ""
@@ -88,7 +89,11 @@ struct CategoryCreationSheet: View {
         let newCategory = Category(name: trimmedName, color: selectedColor.hexValue)
         modelContext.insert(newCategory)
         
-        if modelContext.saveCategory() {
+        let success = modelContext.saveCategory { error, message in
+            appCoordinator.presentAlert(.error(message: "\(message): \(error.localizedDescription)"))
+        }
+        
+        if success {
             dismiss()
         }
     }

@@ -9,6 +9,11 @@ import Foundation
 import SwiftData
 import Observation
 
+/// 模型相關錯誤
+enum ModelError: Error {
+    case saveFailed
+}
+
 /// 待辦事項創建 ViewModel
 /// 管理待辦事項創建表單的狀態和業務邏輯
 @Observable
@@ -75,7 +80,15 @@ final class TodoCreationViewModel {
         }
         
         modelContext.insert(newTodo)
-        try modelContext.save()
+        
+        let success = modelContext.safeSave(operation: "儲存待辦事項") { error, message in
+            // 這裡可能需要更好的錯誤處理方式，因為 ViewModel 沒有 AppCoordinator
+            print("\(message): \(error.localizedDescription)")
+        }
+        
+        if !success {
+            throw ModelError.saveFailed
+        }
         
         return newTodo
     }

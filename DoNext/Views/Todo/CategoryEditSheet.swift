@@ -13,6 +13,7 @@ import SwiftData
 struct CategoryEditSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppCoordinator.self) var appCoordinator
     
     let category: Category
     
@@ -96,7 +97,11 @@ struct CategoryEditSheet: View {
         category.name = trimmedName
         category.color = selectedColor.hexValue
         
-        if modelContext.updateCategory() {
+        let success = modelContext.updateCategory { error, message in
+            appCoordinator.presentAlert(.error(message: "\(message): \(error.localizedDescription)"))
+        }
+        
+        if success {
             dismiss()
         }
     }
