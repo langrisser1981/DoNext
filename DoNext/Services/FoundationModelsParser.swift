@@ -6,6 +6,7 @@
 //
 
 import Foundation
+
 // 注意：FoundationModels 框架將在 iOS 26 正式發布後可用
 // import FoundationModels
 
@@ -13,7 +14,6 @@ import Foundation
 /// 使用 iOS 26 的 Foundation Models 框架進行智能文字解析
 @available(iOS 26.0, *)
 class FoundationModelsParser {
-    
     // MARK: - Properties
     
     private let maxRetries = 3
@@ -49,15 +49,15 @@ class FoundationModelsParser {
         #if false // 等待 iOS 26 發布後啟用
         // 當 FoundationModels 框架可用時，使用以下代碼：
         /*
-        let request = MLFoundationModelRequest(
-            prompt: prompt,
-            maxTokens: 200,
-            temperature: 0.3
-        )
+         let request = MLFoundationModelRequest(
+             prompt: prompt,
+             maxTokens: 200,
+             temperature: 0.3
+         )
         
-        let response = try await MLFoundationModel.shared.generateResponse(request)
-        return response.text
-        */
+         let response = try await MLFoundationModel.shared.generateResponse(request)
+         return response.text
+         */
         #endif
         
         // 模擬 Foundation Models 回應

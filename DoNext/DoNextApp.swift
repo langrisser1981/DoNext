@@ -23,31 +23,11 @@ struct DoNextApp: App {
             Category.self,
         ])
         
-        // 根據用戶設定決定是否啟用 CloudKit 同步
-        let modelConfiguration: ModelConfiguration
-        
-        #if CLOUDKIT_ENABLED
-        if settingsManager.isCloudSyncEnabled && settingsManager.shouldShowCloudSyncOption {
-            // 啟用 CloudKit 同步
-            modelConfiguration = ModelConfiguration(
-                schema: schema,
-                isStoredInMemoryOnly: false,
-                cloudKitDatabase: .automatic
-            )
-        } else {
-            // 僅本地存儲
-            modelConfiguration = ModelConfiguration(
-                schema: schema,
-                isStoredInMemoryOnly: false
-            )
-        }
-        #else
-        // 免費開發者帳號：僅支援本地存儲
-        modelConfiguration = ModelConfiguration(
+        // 使用 Builder Pattern 根據設定創建 ModelConfiguration
+        let modelConfiguration = ModelConfigurationBuilder.fromSettings(
             schema: schema,
-            isStoredInMemoryOnly: false
+            settingsManager: settingsManager
         )
-        #endif
 
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
