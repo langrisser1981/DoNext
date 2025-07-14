@@ -73,7 +73,9 @@ struct AppCoordinatorView: View {
     @Environment(\.modelContext) private var modelContext
     
     var body: some View {
-        NavigationStack(path: binding(for: appCoordinator.appState)) {
+        @Bindable var bindableCoordinator = appCoordinator
+        
+        NavigationStack(path: $bindableCoordinator.navigationPath) {
             rootView
                 .navigationDestination(for: HomeDestination.self) { destination in
                     destinationView(for: destination)
@@ -189,16 +191,6 @@ struct AppCoordinatorView: View {
         }
     }
     
-    /// 為不同的應用程式狀態創建導航綁定
-    private func binding(for appState: CoordinatorAppState) -> Binding<NavigationPath> {
-        if let homeCoordinator = appCoordinator.children.first(where: { $0 is HomeCoordinator }) as? HomeCoordinator {
-            return Binding(
-                get: { homeCoordinator.navigationPath },
-                set: { homeCoordinator.navigationPath = $0 }
-            )
-        }
-        return .constant(NavigationPath())
-    }
     
     /// 刪除分類並清理相關待辦事項
     private func deleteCategoryWithCleanup(_ category: Category) {
