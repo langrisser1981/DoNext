@@ -7,11 +7,13 @@
 
 import Foundation
 
-// 注意：FoundationModels 框架將在 iOS 26 正式發布後可用
-// import FoundationModels
+// iOS 26+ 才會有 FoundationModels
+#if canImport(FoundationModels)
+import FoundationModels
+#endif
 
 /// Foundation Models 文字解析器
-/// 使用 iOS 26 的 Foundation Models 框架進行智能文字解析
+/// 使用 iOS 26 的 SystemLanguageModel 進行智能文字解析
 @available(iOS 26.0, *)
 class FoundationModelsParser {
     // MARK: - Properties
@@ -19,50 +21,84 @@ class FoundationModelsParser {
     private let maxRetries = 3
     private let timeoutInterval: TimeInterval = 30
     
+    #if canImport(FoundationModels)
+    private let systemLanguageModel: SystemLanguageModel
+    #endif
+    
+    // MARK: - Initialization
+    
+    init() {
+        #if canImport(FoundationModels)
+        self.systemLanguageModel = SystemLanguageModel.default
+        #endif
+    }
+    
     // MARK: - Public Methods
     
     /// 解析語音識別文字為結構化的待辦事項資料
     /// - Parameter text: 要解析的文字
     /// - Returns: 解析後的待辦事項資料
     func parseTodoText(_ text: String) async throws -> ParsedTodoData {
-        // 創建解析提示
-        let prompt = createParsingPrompt(for: text)
-        
-        // 使用 Foundation Models 進行解析
-        do {
-            let result = try await performFoundationModelsInference(prompt: prompt)
-            return try parseFoundationModelsResult(result)
-        } catch {
-            // 如果 Foundation Models 失敗，使用關鍵字解析作為後備
-            print("Foundation Models 解析失敗，使用關鍵字解析: \(error)")
+        #if canImport(FoundationModels)
+        // 檢查模型可用性
+        guard systemLanguageModel.availability == .available else {
+            // 如果模型不可用，使用關鍵字解析作為後備
             return parseWithKeywords(text)
         }
+        
+        // 使用 SystemLanguageModel 進行解析
+        do {
+            let result = try await performSystemLanguageModelInference(text: text)
+            return try parseSystemLanguageModelResult(result)
+        } catch {
+            // 如果 SystemLanguageModel 失敗，使用關鍵字解析作為後備
+            print("SystemLanguageModel 解析失敗，使用關鍵字解析: \(error)")
+            return parseWithKeywords(text)
+        }
+        #else
+        // Foundation Models 不可用，使用關鍵字解析
+        return parseWithKeywords(text)
+        #endif
     }
     
-    // MARK: - Foundation Models Integration
+    // MARK: - SystemLanguageModel Integration
     
-    /// 執行 Foundation Models 推理
-    private func performFoundationModelsInference(prompt: String) async throws -> String {
-        // 注意：這裡需要等待 iOS 26 正式發布後才能使用真實的 Foundation Models API
-        // 目前使用模擬實現
+    #if canImport(FoundationModels)
+    /// 執行 SystemLanguageModel 推理
+    private func performSystemLanguageModelInference(text: String) async throws -> String {
+        let prompt = createParsingPrompt(for: text)
         
-        #if false // 等待 iOS 26 發布後啟用
-        // 當 FoundationModels 框架可用時，使用以下代碼：
+        // 檢查模型可用性
+        guard systemLanguageModel.availability == .available else {
+            throw ParsingError.modelNotAvailable
+        }
+        
+        // 使用 SystemLanguageModel 生成回應
+        // 根據 Apple 文檔，應該有類似的方法來生成文本
+        // 當 FoundationModels 框架實際可用時，可能的 API 調用：
         /*
-         let request = MLFoundationModelRequest(
-             prompt: prompt,
-             maxTokens: 200,
-             temperature: 0.3
-         )
-        
-         let response = try await MLFoundationModel.shared.generateResponse(request)
-         return response.text
+         let response = try await systemLanguageModel.generateText(prompt: prompt)
+         return response
          */
-        #endif
         
-        // 模擬 Foundation Models 回應
+        // 目前使用模擬實現，因為真實 API 尚未發布
         return try await simulateFoundationModelsResponse(for: prompt)
     }
+    
+    /// 解析 SystemLanguageModel 結果
+    private func parseSystemLanguageModelResult(_ result: String) throws -> ParsedTodoData {
+        guard let data = result.data(using: .utf8) else {
+            throw ParsingError.invalidResponse
+        }
+        
+        do {
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            return try parseParsedDataFromJSON(json)
+        } catch {
+            throw ParsingError.jsonParsingFailed(error)
+        }
+    }
+    #endif
     
     /// 模擬 Foundation Models 回應（用於開發階段）
     private func simulateFoundationModelsResponse(for prompt: String) async throws -> String {
@@ -322,6 +358,7 @@ enum ParsingError: LocalizedError {
     case invalidResponse
     case jsonParsingFailed(Error)
     case invalidJSON
+    case modelNotAvailable
     
     var errorDescription: String? {
         switch self {
@@ -331,6 +368,8 @@ enum ParsingError: LocalizedError {
             return "JSON 解析失敗: \(error.localizedDescription)"
         case .invalidJSON:
             return "無效的 JSON 資料"
+        case .modelNotAvailable:
+            return "模型不可用"
         }
     }
 }

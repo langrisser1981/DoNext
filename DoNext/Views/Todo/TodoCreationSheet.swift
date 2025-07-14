@@ -38,10 +38,10 @@ struct TodoCreationSheet: View {
     var body: some View {
         NavigationView {
             Form {
-                TodoFormTitleSection(
+                AdaptiveInputSection(
                     title: $title,
-                    onVoiceInputComplete: { parsedData in
-                        applyVoiceInputData(parsedData)
+                    onInputComplete: { parsedData in
+                        applySmartInputData(parsedData)
                     }
                 )
                 
@@ -88,8 +88,8 @@ struct TodoCreationSheet: View {
         }
     }
     
-    /// 套用語音輸入解析結果
-    private func applyVoiceInputData(_ parsedData: ParsedTodoData) {
+    /// 套用智能輸入解析結果
+    private func applySmartInputData(_ parsedData: ParsedTodoData) {
         // 應用解析的標題
         if !parsedData.title.isEmpty {
             title = parsedData.title

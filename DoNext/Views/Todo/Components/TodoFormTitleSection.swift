@@ -150,7 +150,7 @@ struct TodoFormTitleSection: View {
 }
 
 #Preview {
-    @State var title = ""
+    @Previewable @State var title = ""
     return Form {
         TodoFormTitleSection(title: $title)
     }

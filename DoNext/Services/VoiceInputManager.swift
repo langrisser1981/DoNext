@@ -265,6 +265,20 @@ class VoiceInputManager: NSObject {
         
         return data
     }
+    
+    /// 解析純文字輸入（不經過語音識別）
+    /// - Parameter text: 要解析的文字
+    /// - Returns: 解析後的待辦事項資料
+    /// - Throws: 解析過程中的錯誤
+    @MainActor
+    func parseText(_ text: String) async throws -> ParsedTodoData {
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw VoiceInputError.invalidInput("輸入文字不能為空")
+        }
+        
+        // 使用與 parseTextWithFoundationModels 相同的邏輯
+        return try await parseTextWithFoundationModels(text)
+    }
 }
 
 // MARK: - SFSpeechRecognizerDelegate
@@ -295,6 +309,7 @@ enum VoiceInputError: LocalizedError {
     case permissionDenied
     case speechRecognizerUnavailable
     case recognitionRequestFailed
+    case invalidInput(String)
     
     var errorDescription: String? {
         switch self {
@@ -304,6 +319,8 @@ enum VoiceInputError: LocalizedError {
             return "語音識別服務不可用"
         case .recognitionRequestFailed:
             return "無法創建語音識別請求"
+        case .invalidInput(let message):
+            return message
         }
     }
 }

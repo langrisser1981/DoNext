@@ -44,6 +44,9 @@ struct DoNextApp: App {
     
     /// 通知管理器
     @State private var notificationManager = NotificationManager.shared
+    
+    /// Apple Intelligence 可用性管理器
+    @State private var intelligenceAvailabilityManager = IntelligenceAvailabilityManager()
 
     /// 應用程式場景配置
     var body: some Scene {
@@ -53,6 +56,7 @@ struct DoNextApp: App {
                 .environment(cloudKitManager)
                 .environment(settingsManager)
                 .environment(notificationManager)
+                .environment(intelligenceAvailabilityManager)
                 .modelContainer(createModelContainer())
                 .onAppear {
                     appCoordinator.start()
