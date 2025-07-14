@@ -81,16 +81,10 @@ struct AppCoordinatorView: View {
                     destinationView(for: destination)
                 }
         }
-        .sheet(item: Binding(
-            get: { appCoordinator.presentedSheet },
-            set: { _ in appCoordinator.dismissSheet() }
-        )) { sheet in
+        .sheet(item: $bindableCoordinator.presentedSheet) { sheet in
             sheetView(for: sheet)
         }
-        .alert(item: Binding(
-            get: { appCoordinator.presentedAlert },
-            set: { _ in appCoordinator.dismissAlert() }
-        )) { alert in
+        .alert(item: $bindableCoordinator.presentedAlert) { alert in
             alertView(for: alert)
         }
     }
