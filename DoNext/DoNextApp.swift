@@ -136,50 +136,65 @@ struct AppCoordinatorView: View {
     private func alertView(for alert: AlertDestination) -> Alert {
         switch alert {
         case .signOutConfirmation:
-            return Alert(
-                title: Text("確認登出"),
-                message: Text("您確定要登出嗎？"),
-                primaryButton: .destructive(Text("登出")) {
-                    Task {
-                        try? await appCoordinator.signOut()
+            return AlertBuilder
+                .confirmation(
+                    title: "確認登出",
+                    message: "您確定要登出嗎？",
+                    confirmText: "登出",
+                    isDestructive: true,
+                    onConfirm: {
+                        Task {
+                            try? await appCoordinator.signOut()
+                        }
                     }
-                },
-                secondaryButton: .cancel()
-            )
+                )
+                .build()
+            
         case .deleteConfirmation(let item):
-            return Alert(
-                title: Text("確認刪除"),
-                message: Text("您確定要刪除「\(item.title)」嗎？"),
-                primaryButton: .destructive(Text("刪除")) {
-                    // 先移除通知
-                    Task {
-                        await notificationManager.removeNotification(for: item)
+            return AlertBuilder
+                .confirmation(
+                    title: "確認刪除",
+                    message: "您確定要刪除「\(item.title)」嗎？",
+                    confirmText: "刪除",
+                    isDestructive: true,
+                    onConfirm: {
+                        handleTodoItemDeletion(item)
                     }
-                    
-                    // 刪除待辦事項
-                    modelContext.delete(item)
-                    modelContext.deleteTodoItem()
-                },
-                secondaryButton: .cancel()
-            )
+                )
+                .build()
+            
         case .categoryDeleteConfirmation(let category):
-            return Alert(
-                title: Text("確認刪除分類"),
-                message: Text("您確定要刪除「\(category.name)」分類嗎？此分類下的所有待辦事項將會被取消分類。"),
-                primaryButton: .destructive(Text("刪除")) {
-                    deleteCategoryWithCleanup(category)
-                },
-                secondaryButton: .cancel()
-            )
+            return AlertBuilder
+                .confirmation(
+                    title: "確認刪除分類",
+                    message: "您確定要刪除「\(category.name)」分類嗎？此分類下的所有待辦事項將會被取消分類。",
+                    confirmText: "刪除",
+                    isDestructive: true,
+                    onConfirm: {
+                        deleteCategoryWithCleanup(category)
+                    }
+                )
+                .build()
+            
         case .error(let message):
-            return Alert(
-                title: Text("錯誤"),
-                message: Text(message),
-                dismissButton: .default(Text("確定"))
-            )
+            return AlertBuilder
+                .error(message)
+                .build()
         }
     }
     
+    
+    /// 處理待辦事項刪除
+    private func handleTodoItemDeletion(_ item: TodoItem) {
+        // 先移除通知
+        Task {
+            await notificationManager.removeNotification(for: item)
+        }
+        
+        // 刪除待辦事項
+        modelContext.delete(item)
+        modelContext.deleteTodoItem(appCoordinator: appCoordinator)
+    }
     
     /// 刪除分類並清理相關待辦事項
     private func deleteCategoryWithCleanup(_ category: Category) {
@@ -190,7 +205,7 @@ struct AppCoordinatorView: View {
         
         // 刪除分類
         modelContext.delete(category)
-        modelContext.deleteCategory()
+        modelContext.deleteCategory(appCoordinator: appCoordinator)
     }
 }
 

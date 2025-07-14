@@ -27,29 +27,31 @@ extension ModelContext {
         }
     }
     
-    /// 安全儲存資料並在主執行緒顯示錯誤
+    /// 安全儲存資料並透過 AppCoordinator 顯示錯誤
     /// - Parameters:
     ///   - errorMessage: 儲存失敗時要顯示的錯誤訊息
-    ///   - showAlert: 是否顯示用戶友好的錯誤提示
+    ///   - appCoordinator: 應用程式座標器（可選，用於顯示錯誤）
     ///   - onError: 可選的錯誤處理回調
     /// - Returns: 是否儲存成功
     @MainActor
     @discardableResult
     func safeSaveWithAlert(
         errorMessage: String = "儲存失敗",
-        showAlert: Bool = false,
+        appCoordinator: AppCoordinator? = nil,
         onError: ((Error) -> Void)? = nil
     ) -> Bool {
         do {
             try save()
             return true
         } catch {
-            let fullMessage = "\(errorMessage): \(error)"
-            print(fullMessage)
+            let fullMessage = "\(errorMessage): \(error.localizedDescription)"
+            print("\(errorMessage): \(error)")
             
-            if showAlert {
-                // 這裡可以整合 AppCoordinator 顯示錯誤 Alert
-                // 或者使用通知中心發送錯誤事件
+            // 如果提供了 AppCoordinator，使用它顯示錯誤
+            if let coordinator = appCoordinator {
+                coordinator.presentAlert(.error(message: fullMessage))
+            } else {
+                // 否則使用通知中心發送錯誤事件
                 NotificationCenter.default.post(
                     name: .modelContextSaveError,
                     object: fullMessage
@@ -74,38 +76,86 @@ extension Notification.Name {
 extension ModelContext {
     
     /// 儲存待辦事項
+    @MainActor
     @discardableResult
-    func saveTodoItem(errorMessage: String = "儲存待辦事項失敗") -> Bool {
-        return safeSave(errorMessage: errorMessage)
+    func saveTodoItem(
+        errorMessage: String = "儲存待辦事項失敗",
+        appCoordinator: AppCoordinator? = nil
+    ) -> Bool {
+        if let coordinator = appCoordinator {
+            return safeSaveWithAlert(errorMessage: errorMessage, appCoordinator: coordinator)
+        } else {
+            return safeSave(errorMessage: errorMessage)
+        }
     }
     
     /// 儲存分類
+    @MainActor
     @discardableResult
-    func saveCategory(errorMessage: String = "儲存分類失敗") -> Bool {
-        return safeSave(errorMessage: errorMessage)
+    func saveCategory(
+        errorMessage: String = "儲存分類失敗",
+        appCoordinator: AppCoordinator? = nil
+    ) -> Bool {
+        if let coordinator = appCoordinator {
+            return safeSaveWithAlert(errorMessage: errorMessage, appCoordinator: coordinator)
+        } else {
+            return safeSave(errorMessage: errorMessage)
+        }
     }
     
     /// 刪除待辦事項
+    @MainActor
     @discardableResult
-    func deleteTodoItem(errorMessage: String = "刪除待辦事項失敗") -> Bool {
-        return safeSave(errorMessage: errorMessage)
+    func deleteTodoItem(
+        errorMessage: String = "刪除待辦事項失敗",
+        appCoordinator: AppCoordinator? = nil
+    ) -> Bool {
+        if let coordinator = appCoordinator {
+            return safeSaveWithAlert(errorMessage: errorMessage, appCoordinator: coordinator)
+        } else {
+            return safeSave(errorMessage: errorMessage)
+        }
     }
     
     /// 刪除分類
+    @MainActor
     @discardableResult
-    func deleteCategory(errorMessage: String = "刪除分類失敗") -> Bool {
-        return safeSave(errorMessage: errorMessage)
+    func deleteCategory(
+        errorMessage: String = "刪除分類失敗",
+        appCoordinator: AppCoordinator? = nil
+    ) -> Bool {
+        if let coordinator = appCoordinator {
+            return safeSaveWithAlert(errorMessage: errorMessage, appCoordinator: coordinator)
+        } else {
+            return safeSave(errorMessage: errorMessage)
+        }
     }
     
     /// 更新待辦事項
+    @MainActor
     @discardableResult
-    func updateTodoItem(errorMessage: String = "更新待辦事項失敗") -> Bool {
-        return safeSave(errorMessage: errorMessage)
+    func updateTodoItem(
+        errorMessage: String = "更新待辦事項失敗",
+        appCoordinator: AppCoordinator? = nil
+    ) -> Bool {
+        if let coordinator = appCoordinator {
+            return safeSaveWithAlert(errorMessage: errorMessage, appCoordinator: coordinator)
+        } else {
+            return safeSave(errorMessage: errorMessage)
+        }
     }
     
     /// 更新分類
+    @MainActor
     @discardableResult
-    func updateCategory(errorMessage: String = "更新分類失敗") -> Bool {
-        return safeSave(errorMessage: errorMessage)
+    func updateCategory(
+        errorMessage: String = "更新分類失敗",
+        appCoordinator: AppCoordinator? = nil
+    ) -> Bool {
+        if let coordinator = appCoordinator {
+            return safeSaveWithAlert(errorMessage: errorMessage, appCoordinator: coordinator)
+        } else {
+            return safeSave(errorMessage: errorMessage)
+        }
     }
 }
