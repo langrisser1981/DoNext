@@ -37,7 +37,12 @@ struct TodoEditSheet: View {
     var body: some View {
         NavigationView {
             Form {
-                TodoFormTitleSection(title: $title)
+                TodoFormTitleSection(
+                    title: $title,
+                    onVoiceInputComplete: { parsedData in
+                        applyVoiceInputData(parsedData)
+                    }
+                )
                 
                 TodoFormCategorySection(
                     categories: categories,
@@ -98,6 +103,30 @@ struct TodoEditSheet: View {
         
         // 設定重複類型
         repeatType = todoItem.repeatType
+    }
+    
+    /// 套用語音輸入解析結果
+    private func applyVoiceInputData(_ parsedData: ParsedTodoData) {
+        // 應用解析的標題
+        if !parsedData.title.isEmpty {
+            title = parsedData.title
+        }
+        
+        // 應用建議的分類
+        if let suggestedCategory = parsedData.suggestedCategory {
+            if let categoryIndex = categories.firstIndex(where: { $0.name == suggestedCategory }) {
+                selectedCategoryIndex = categoryIndex + 1 // +1 因為第一個選項是「無分類」
+            }
+        }
+        
+        // 應用提醒設定
+        if parsedData.hasReminder {
+            reminderEnabled = true
+            if let reminderDate = parsedData.reminderDate {
+                self.reminderDate = reminderDate
+            }
+            repeatType = parsedData.repeatType
+        }
     }
     
     /// 儲存待辦事項
