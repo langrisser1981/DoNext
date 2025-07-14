@@ -88,11 +88,8 @@ struct CategoryCreationSheet: View {
         let newCategory = Category(name: trimmedName, color: selectedColor.hexValue)
         modelContext.insert(newCategory)
         
-        do {
-            try modelContext.save()
+        if modelContext.saveCategory() {
             dismiss()
-        } catch {
-            print("儲存分類失敗: \(error)")
         }
     }
 }

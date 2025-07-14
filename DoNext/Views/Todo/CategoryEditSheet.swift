@@ -96,11 +96,8 @@ struct CategoryEditSheet: View {
         category.name = trimmedName
         category.color = selectedColor.hexValue
         
-        do {
-            try modelContext.save()
+        if modelContext.updateCategory() {
             dismiss()
-        } catch {
-            print("更新分類失敗: \(error)")
         }
     }
 }

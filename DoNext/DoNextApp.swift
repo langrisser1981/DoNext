@@ -158,12 +158,7 @@ struct AppCoordinatorView: View {
                     
                     // 刪除待辦事項
                     modelContext.delete(item)
-                    
-                    do {
-                        try modelContext.save()
-                    } catch {
-                        print("刪除待辦事項失敗: \(error)")
-                    }
+                    modelContext.deleteTodoItem()
                 },
                 secondaryButton: .cancel()
             )
@@ -195,12 +190,7 @@ struct AppCoordinatorView: View {
         
         // 刪除分類
         modelContext.delete(category)
-        
-        do {
-            try modelContext.save()
-        } catch {
-            print("刪除分類失敗: \(error)")
-        }
+        modelContext.deleteCategory()
     }
 }
 

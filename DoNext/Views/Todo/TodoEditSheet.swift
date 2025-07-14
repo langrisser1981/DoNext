@@ -111,9 +111,7 @@ struct TodoEditSheet: View {
         todoItem.reminderDate = reminderEnabled ? reminderDate : nil
         todoItem.repeatType = reminderEnabled ? repeatType : .none
         
-        do {
-            try modelContext.save()
-            
+        if modelContext.updateTodoItem() {
             // 處理通知
             Task {
                 // 先移除舊的通知
@@ -126,8 +124,6 @@ struct TodoEditSheet: View {
             }
             
             dismiss()
-        } catch {
-            print("更新待辦事項失敗: \(error)")
         }
     }
 }

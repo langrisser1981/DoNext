@@ -124,9 +124,7 @@ struct TodoCreationSheet: View {
         
         modelContext.insert(newTodo)
         
-        do {
-            try modelContext.save()
-            
+        if modelContext.saveTodoItem() {
             // 如果有設定提醒，排程通知
             if reminderEnabled {
                 Task {
@@ -135,8 +133,6 @@ struct TodoCreationSheet: View {
             }
             
             dismiss()
-        } catch {
-            print("儲存待辦事項失敗: \(error)")
         }
     }
 }
